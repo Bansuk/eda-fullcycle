@@ -1,0 +1,7 @@
+-- Balances service schema
+CREATE TABLE IF NOT EXISTS balances (
+  account_id VARCHAR(255)   NOT NULL,
+  balance    DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  updated_at DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (account_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

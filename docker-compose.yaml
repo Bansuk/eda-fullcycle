@@ -1,13 +1,22 @@
-version: '3'
+version: "3"
 
 services:
-  goapp: 
+  # ─────────────────────────────────────────────
+  # Wallet Core (Go) – transaction producer
+  # ─────────────────────────────────────────────
+  goapp:
     build: .
     platform: linux/amd64
     volumes:
       - .:/app
     ports:
       - 8080:8080
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
 
   mysql:
     image: mysql:5.7
@@ -20,7 +29,60 @@ services:
       - 3306:3306
     volumes:
       - .docker/mysql:/var/lib/mysql
+      - ./init/wallet:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
+  # ─────────────────────────────────────────────
+  # Balances Service (TypeScript) – Kafka consumer
+  # ─────────────────────────────────────────────
+  balances:
+    build: ./balances
+    ports:
+      - 3003:3003
+    depends_on:
+      balances-mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      DB_HOST: balances-mysql
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: balances
+      KAFKA_BROKERS: kafka:29092
+      PORT: "3003"
+    restart: on-failure
+
+  balances-mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: balances
+      MYSQL_PASSWORD: root
+    ports:
+      - 3307:3306
+    volumes:
+      - .docker/balances-mysql:/var/lib/mysql
+      - ./init/balances:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Kafka ecosystem
+  # ─────────────────────────────────────────────
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
     container_name: zookeeper
@@ -37,10 +99,10 @@ services:
     depends_on:
       - zookeeper
     ports:
-    # Exposes 9092 for external connections to the broker
-    # Use kafka:29092 for connections internal on the docker network
-    # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
-      - '9092:9092'
+      # Exposes 9092 for external connections to the broker
+      # Use kafka:29092 for connections internal on the docker network
+      # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
+      - "9092:9092"
     environment:
       TZ: Sao_Paulo/Brazil
       KAFKA_BROKER_ID: 1
@@ -53,7 +115,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
-      CONFLUENT_METRICS_ENABLE: 'false'
+      CONFLUENT_METRICS_ENABLE: "false"
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:7.3.0
@@ -64,10 +126,9 @@ services:
     ports:
       - "9021:9021"
     environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka:29092'
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: "kafka:29092"
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
-  

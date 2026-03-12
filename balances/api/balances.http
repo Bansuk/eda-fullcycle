@@ -1,0 +1,12 @@
+### Get balance for Alice's account (seeded with 1000.00)
+GET http://localhost:3003/balances/f8df753c-3b58-43aa-8016-12aaa4f1ea3e
+
+###
+
+### Get balance for Bob's account (seeded with 500.00)
+GET http://localhost:3003/balances/0216ea38-524f-4e85-8743-d484a8f7538e
+
+###
+
+### Get balance for a non-existent account (returns 404)
+GET http://localhost:3003/balances/00000000-0000-0000-0000-000000000000

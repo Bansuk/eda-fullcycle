@@ -1,28 +1,52 @@
 
-POST http://localhost:3000/clients HTTP/1.1
+### Create client – Alice
+POST http://localhost:8080/clients HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "John Doe",
-    "email": "john@j.com"
+    "name": "Alice Smith",
+    "email": "alice@example.com"
 }
 
 ###
 
-POST http://localhost:3000/accounts HTTP/1.1
+### Create client – Bob
+POST http://localhost:8080/clients HTTP/1.1
 Content-Type: application/json
 
 {
-    "client_id": "87495b95-1c7f-4038-ae55-ab36ed6a9411"
+    "name": "Bob Jones",
+    "email": "bob@example.com"
 }
 
 ###
 
+### Create account for Alice (replace client_id with Alice's id)
+POST http://localhost:8080/accounts HTTP/1.1
+Content-Type: application/json
+
+{
+    "client_id": "f4a498a7-5f0c-4ead-8f3b-d5a48264a2b1"
+}
+
+###
+
+### Create account for Bob (replace client_id with Bob's id)
+POST http://localhost:8080/accounts HTTP/1.1
+Content-Type: application/json
+
+{
+    "client_id": "8b38afc4-1e47-4f9d-a2f5-ef12dc0c3c34"
+}
+
+###
+
+### Create a transaction  (Alice → Bob, uses seed account IDs)
 POST http://localhost:8080/transactions HTTP/1.1
 Content-Type: application/json
 
 {
     "account_id_from": "f8df753c-3b58-43aa-8016-12aaa4f1ea3e",
     "account_id_to": "0216ea38-524f-4e85-8743-d484a8f7538e",
-    "amount": 1
+    "amount": 100
 }
