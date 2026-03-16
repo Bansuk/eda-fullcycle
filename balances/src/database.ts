@@ -30,6 +30,33 @@ export async function upsertBalance(
 	);
 }
 
+export async function upsertBalances(
+	balances: Array<{ accountId: string; balance: number }>,
+): Promise<void> {
+	const db = await getDB();
+	const connection = await db.getConnection();
+
+	try {
+		await connection.beginTransaction();
+
+		for (const { accountId, balance } of balances) {
+			await connection.execute(
+				`INSERT INTO balances (account_id, balance, updated_at)
+         VALUES (?, ?, NOW())
+         ON DUPLICATE KEY UPDATE balance = VALUES(balance), updated_at = NOW()`,
+				[accountId, balance],
+			);
+		}
+
+		await connection.commit();
+	} catch (error) {
+		await connection.rollback();
+		throw error;
+	} finally {
+		connection.release();
+	}
+}
+
 export interface Balance extends RowDataPacket {
 	account_id: string;
 	balance: string;

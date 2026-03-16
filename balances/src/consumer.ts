@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import { upsertBalance } from "./database";
+import { upsertBalances } from "./database";
 
 interface BalanceUpdatedPayload {
 	account_id_from: string;
@@ -49,8 +49,10 @@ export async function startConsumer(): Promise<void> {
 						balance_account_id_to,
 					} = event.Payload;
 
-					await upsertBalance(account_id_from, balance_account_id_from);
-					await upsertBalance(account_id_to, balance_account_id_to);
+					await upsertBalances([
+						{ accountId: account_id_from, balance: balance_account_id_from },
+						{ accountId: account_id_to, balance: balance_account_id_to },
+					]);
 
 					console.log(
 						`Balances updated — from: ${account_id_from}=${balance_account_id_from}, to: ${account_id_to}=${balance_account_id_to}`,
