@@ -17,9 +17,7 @@ app.get(
 			}
 
 			res.json({
-				account_id: balance.account_id,
 				balance: Number(balance.balance),
-				updated_at: balance.updated_at,
 			});
 		} catch (err) {
 			console.error("Error fetching balance:", err);

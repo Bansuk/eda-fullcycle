@@ -22,6 +22,7 @@ export async function upsertBalance(
 	balance: number,
 ): Promise<void> {
 	const db = await getDB();
+	
 	await db.execute(
 		`INSERT INTO balances (account_id, balance, updated_at)
      VALUES (?, ?, NOW())
@@ -65,6 +66,7 @@ export interface Balance extends RowDataPacket {
 
 export async function getBalance(accountId: string): Promise<Balance | null> {
 	const db = await getDB();
+
 	const [rows] = await db.execute<Balance[]>(
 		"SELECT account_id, balance, updated_at FROM balances WHERE account_id = ?",
 		[accountId],

@@ -1,9 +1,6 @@
 version: "3"
 
 services:
-  # ─────────────────────────────────────────────
-  # Wallet Core (Go) – transaction producer
-  # ─────────────────────────────────────────────
   goapp:
     build: .
     platform: linux/amd64
@@ -31,16 +28,12 @@ services:
       - .docker/mysql:/var/lib/mysql
       - ./init/wallet:/docker-entrypoint-initdb.d
     healthcheck:
-      test:
-        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # ─────────────────────────────────────────────
-  # Balances Service (TypeScript) – Kafka consumer
-  # ─────────────────────────────────────────────
   balances:
     build: ./balances
     ports:
@@ -73,16 +66,12 @@ services:
       - .docker/balances-mysql:/var/lib/mysql
       - ./init/balances:/docker-entrypoint-initdb.d
     healthcheck:
-      test:
-        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # ─────────────────────────────────────────────
-  # Kafka ecosystem
-  # ─────────────────────────────────────────────
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
     container_name: zookeeper
