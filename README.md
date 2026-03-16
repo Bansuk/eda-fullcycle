@@ -1,55 +1,55 @@
 # EDA Fullcycle – Wallet Core + Balances Service
 
-Event-Driven Architecture demo built with **Go** (Wallet Core producer) and **TypeScript** (Balances consumer), connected via **Apache Kafka**.
+Demonstração de Arquitetura Orientada por Eventos construída com **Go** (produtor Wallet Core) e **TypeScript** (consumidor Balances), conectados via **Apache Kafka**.
 
 ---
 
-## Architecture
+## Arquitetura
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Docker Network                                                      │
+│ Rede Docker                                                         │
 │                                                                     │
 │  ┌────────────┐   POST /transactions   ┌──────────────────────────┐ │
-│  │   Client   │ ──────────────────────▶│  Wallet Core (Go :8080)  │ │
-│  └────────────┘                        │  MySQL: wallet DB        │ │
+│  │   Cliente  │ ──────────────────────▶│  Wallet Core (Go :8080)  │ │
+│  └────────────┘                        │  MySQL: wallet           │ │
 │                                        └──────────┬───────────────┘ │
 │                                                   │ BalanceUpdated  │
 │                                                   ▼                 │
 │                                        ┌──────────────────────────┐ │
-│                                        │   Kafka topic: balances  │ │
+│                                        │ Tópico Kafka: balances   │ │
 │                                        └──────────┬───────────────┘ │
 │                                                   │                 │
 │                                                   ▼                 │
 │  ┌────────────┐  GET /balances/{id}   ┌──────────────────────────┐  │
-│  │   Client   │ ◀─────────────────── │ Balances Service (TS     │  │
-│  └────────────┘                       │ :3003) MySQL: balances DB│  │
+│  │   Cliente  │ ◀───────────────────  │  Serviço Balances (TS    │  │
+│  └────────────┘                       │ :3003) MySQL: balance    │  │
 │                                       └──────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Services
+### Serviços
 
-| Service          | Technology | Port | Description                             |
-| ---------------- | ---------- | ---- | --------------------------------------- |
-| `goapp`          | Go         | 8080 | Wallet Core – REST API + Kafka producer |
-| `mysql`          | MySQL 5.7  | 3306 | Wallet Core database                    |
-| `balances`       | TypeScript | 3003 | Balances Service – Kafka consumer + API |
-| `balances-mysql` | MySQL 5.7  | 3307 | Balances Service database               |
-| `kafka`          | Confluent  | 9092 | Message broker                          |
-| `zookeeper`      | Confluent  | 2181 | Kafka coordinator                       |
-| `control-center` | Confluent  | 9021 | Kafka UI                                |
+| Serviço          | Tecnologia | Porta | Descrição                                 |
+| ---------------- | ---------- | ----- | ----------------------------------------- |
+| `goapp`          | Go         | 8080  | Wallet Core – REST API + produtor Kafka   |
+| `mysql`          | MySQL 5.7  | 3306  | Banco de dados Wallet Core                |
+| `balances`       | TypeScript | 3003  | Serviço Balances – consumidor Kafka + API |
+| `balances-mysql` | MySQL 5.7  | 3307  | Banco de dados Serviço Balances           |
+| `kafka`          | Confluent  | 9092  | Message broker                            |
+| `zookeeper`      | Confluent  | 2181  | Coordenador Kafka                         |
+| `control-center` | Confluent  | 9021  | Interface Kafka                           |
 
 ---
 
-## Kafka Topics
+## Tópicos Kafka
 
-| Topic          | Producer    | Consumer         | Payload                                                     |
-| -------------- | ----------- | ---------------- | ----------------------------------------------------------- |
-| `transactions` | Wallet Core | —                | `TransactionCreated` event                                  |
-| `balances`     | Wallet Core | Balances Service | `BalanceUpdated` event with `account_id_from/to` + balances |
+| Tópico         | Produtor    | Consumidor       | Payload                                                   |
+| -------------- | ----------- | ---------------- | --------------------------------------------------------- |
+| `transactions` | Wallet Core | —                | evento `TransactionCreated`                               |
+| `balances`     | Wallet Core | Serviço Balances | evento `BalanceUpdated` com `account_id_from/to` + saldos |
 
-### `BalanceUpdated` message format (topic: `balances`)
+### Formato de mensagem `BalanceUpdated` (tópico: `balances`)
 
 ```json
 {
@@ -65,30 +65,30 @@ Event-Driven Architecture demo built with **Go** (Wallet Core producer) and **Ty
 
 ---
 
-## Quick Start
+## Início Rápido
 
-### Prerequisites
+### Pré-requisitos
 
 - Docker ≥ 24
 - Docker Compose ≥ 2
 
-### 1. Start the entire ecosystem
+### 1. Inicie todo o ecossistema
 
 ```bash
 docker compose up -d
 ```
 
-This single command will:
+Este comando único irá:
 
-- Start Zookeeper + Kafka + Confluent Control Center
-- Start both MySQL databases (wallet and balances)
-- Run SQL init scripts: schema + seed data for both databases (first run only)
-- Build and start the Go Wallet Core app on `:8080`
-- Build and start the TypeScript Balances Service on `:3003`
+- Iniciar Zookeeper + Kafka + Confluent Control Center
+- Iniciar ambos os bancos MySQL (wallet e balances)
+- Executar scripts de inicialização SQL: schema + dados iniciais para ambos (somente primeira execução)
+- Construir e iniciar o aplicativo Go Wallet Core em `:8080`
+- Construir e iniciar o Serviço Balances TypeScript em `:3003`
 
-> **First-run note:** The Go app compiles inside the container on first start, which can take ~30–60 s. Wait for the log `Server is running` before sending requests.
+> **Nota de primeira execução:** O aplicativo Go é compilado dentro do container na primeira inicialização, o que pode levar ~30–60 s. Aguarde o log `Server is running` antes de enviar requisições.
 
-### 2. Verify services are up
+### 2. Verifique se os serviços estão executando
 
 ```bash
 docker compose ps
@@ -96,135 +96,89 @@ docker compose ps
 
 ---
 
-## Seed Data
+## Dados Iniciais
 
-Both databases are pre-populated on first start:
+Ambos os bancos são pré-populados na primeira execução:
 
 ### Wallet Core (`wallet` DB)
 
-| Entity  | ID                                     | Name        | Balance |
-| ------- | -------------------------------------- | ----------- | ------- |
-| Client  | `f4a498a7-5f0c-4ead-8f3b-d5a48264a2b1` | Alice Smith | —       |
-| Client  | `8b38afc4-1e47-4f9d-a2f5-ef12dc0c3c34` | Bob Jones   | —       |
-| Account | `f8df753c-3b58-43aa-8016-12aaa4f1ea3e` | Alice       | 1000.00 |
-| Account | `0216ea38-524f-4e85-8743-d484a8f7538e` | Bob         | 500.00  |
-
-### Balances Service (`balances` DB)
-
-Same account IDs are pre-seeded with matching initial balances.
+| Entidade | ID                                     | Nome        | Saldo   |
+| -------- | -------------------------------------- | ----------- | ------- |
+| Cliente  | `f4a498a7-5f0c-4ead-8f3b-d5a48264a2b1` | Alice Smith | —       |
+| Cliente  | `8b38afc4-1e47-4f9d-a2f5-ef12dc0c3c34` | Bob Jones   | —       |
+| Conta    | `f8df753c-3b58-43aa-8016-12aaa4f1ea3e` | Alice       | 1000.00 |
+| Conta    | `0216ea38-524f-4e85-8743-d484a8f7538e` | Bob         | 500.00  |
 
 ---
 
-## API Reference
+## Referência de API
 
 ### Wallet Core (`http://localhost:8080`)
 
-| Method | Path            | Description              |
+| Método | Caminho         | Descrição                |
 | ------ | --------------- | ------------------------ |
-| POST   | `/clients`      | Create a new client      |
-| POST   | `/accounts`     | Create a new account     |
-| POST   | `/transactions` | Create a new transaction |
+| POST   | `/clients`      | Criar um novo cliente    |
+| POST   | `/accounts`     | Criar uma nova conta     |
+| POST   | `/transactions` | Criar uma nova transação |
 
-See [api/client.http](api/client.http) for ready-to-run requests.
+Veja [api/client.http](api/client.http) para requisições prontas para executar.
 
-### Balances Service (`http://localhost:3003`)
+### Serviço Balances (`http://localhost:3003`)
 
-| Method | Path                     | Description                 |
-| ------ | ------------------------ | --------------------------- |
-| GET    | `/balances/{account_id}` | Get current account balance |
+| Método | Caminho                  | Descrição                  |
+| ------ | ------------------------ | -------------------------- |
+| GET    | `/balances/{account_id}` | Obter saldo da conta atual |
 
-See [balances/api/balances.http](balances/api/balances.http) for ready-to-run requests.
+Veja [balances/api/balances.http](balances/api/balances.http) para requisições prontas para executar.å
 
-#### Example
+## Desenvolvimento
 
-```bash
-# Check Alice's balance (seeded at 1000.00)
-curl http://localhost:3003/balances/f8df753c-3b58-43aa-8016-12aaa4f1ea3e
-```
+### Tecnologias Utilizadas
 
-```json
-{
-	"account_id": "f8df753c-3b58-43aa-8016-12aaa4f1ea3e",
-	"balance": 1000,
-	"updated_at": "2026-03-11T00:00:00.000Z"
-}
-```
+- **Go** – Linguagem de programação para o Wallet Core
+- **TypeScript/Node.js** – Linguagem e runtime para o Serviço Balances
+  - Express.js – Framework web
+  - MySQL2 – Cliente MySQL
+- **Apache Kafka** – Message broker para comunicação assíncrona entre serviços
+  - Confluent Kafka – Distribuição completa do Kafka
+  - Zookeeper – Coordenação do cluster Kafka
+  - Confluent Control Center – Interface web para gerenciar Kafka
+- **MySQL 5.7** – Banco de dados relacional para ambos os serviços
+- **Docker & Docker Compose** – Containerização e orquestração
+- **SQL** – Scripts de inicialização para schema e dados iniciais
 
-```bash
-# Create a transaction (Alice → Bob, 100 units)
-curl -X POST http://localhost:8080/transactions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "account_id_from": "f8df753c-3b58-43aa-8016-12aaa4f1ea3e",
-    "account_id_to":   "0216ea38-524f-4e85-8743-d484a8f7538e",
-    "amount": 100
-  }'
-```
-
-After the transaction, check Alice's balance again — it will be updated to `900` by the Balances Service automatically via Kafka.
-
----
-
-## Development
-
-### Resetting data volumes (clean slate)
-
-The MySQL init scripts run **only when the data volume is empty**. To reset:
-
-```bash
-docker compose down -v
-sudo rm -rf .docker/mysql .docker/balances-mysql
-docker compose up -d
-```
-
-### Kafka UI
-
-Open [http://localhost:9021](http://localhost:9021) to inspect topics and messages in Confluent Control Center.
-
-### Logs
-
-```bash
-# Follow all service logs
-docker compose logs -f
-
-# Follow only the balances service
-docker compose logs -f balances
-```
-
----
-
-## Project Structure
+## Estrutura do Projeto
 
 ```
 .
-├── cmd/walletcore/main.go       # Wallet Core entry point
-├── internal/                   # Go domain layer
-│   ├── entity/                 # Domain entities
-│   ├── usecase/                # Application use cases
-│   ├── event/                  # Domain events + Kafka handlers
-│   ├── database/               # MySQL repositories
-│   ├── gateway/                # Repository interfaces
-│   └── web/                    # HTTP handlers
-├── pkg/                        # Shared Go packages
-│   ├── events/                 # Event dispatcher
-│   ├── kafka/                  # Kafka producer/consumer
-│   └── uow/                    # Unit of Work
-├── balances/                   # Balances microservice (TypeScript)
+├── cmd/walletcore/main.go      # Ponto de entrada Wallet Core
+├── internal/                   # Camada de domínio Go
+│   ├── entity/                 # Entidades de domínio
+│   ├── usecase/                # Casos de uso da aplicação
+│   ├── event/                  # Eventos de domínio + manipuladores Kafka
+│   ├── database/               # Repositórios MySQL
+│   ├── gateway/                # Interfaces de repositório
+│   └── web/                    # Manipuladores HTTP
+├── pkg/                        # Pacotes Go compartilhados
+│   ├── events/                 # Distribuidor de eventos
+│   ├── kafka/                  # Produtor/consumidor Kafka
+│   └── uow/                    # Unidade de Trabalho
+├── balances/                   # Microsserviço Balances (TypeScript)
 │   ├── src/
-│   │   ├── index.ts            # Entry point
-│   │   ├── consumer.ts         # Kafka consumer
-│   │   ├── server.ts           # Express HTTP server
-│   │   └── database.ts         # MySQL queries
-│   ├── api/balances.http       # Ready-to-run HTTP requests
+│   │   ├── index.ts            # Ponto de entrada
+│   │   ├── consumer.ts         # Consumidor Kafka
+│   │   ├── server.ts           # Servidor Express
+│   │   └── database.ts         # Consultas MySQL
+│   ├── api/balances.http       # Requisições prontas para executar
 │   ├── Dockerfile
 │   ├── package.json
 │   └── tsconfig.json
 ├── init/
-│   ├── wallet/01-init.sql      # Wallet DB schema + seeds
+│   ├── wallet/01-init.sql      # Schema + dados iniciais banco wallet
 │   └── balances/
-│       ├── 01-schema.sql       # Balances DB schema
-│       └── 02-seeds.sql        # Balances DB seeds
-├── api/client.http             # Wallet Core HTTP requests
-├── Dockerfile                  # Wallet Core Dockerfile
-└── docker-compose.yaml         # Full ecosystem orchestration
+│       ├── 01-schema.sql       # Schema banco balances
+│       └── 02-seeds.sql        # Dados iniciais banco balances
+├── api/client.http             # Requisições Wallet Core
+├── Dockerfile                  # Dockerfile Wallet Core
+└── docker-compose.yaml         # Orquestração do ecossistema completo
 ```
