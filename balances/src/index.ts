@@ -31,12 +31,8 @@ async function waitAndStartConsumer(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	console.log("Starting Balances Service...");
-
-	// Start HTTP server immediately
 	startServer(PORT);
 
-	// Start Kafka consumer with retry logic
 	await waitAndStartConsumer();
 }
 

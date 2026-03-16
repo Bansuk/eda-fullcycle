@@ -1,4 +1,3 @@
--- Wallet Core schema
 CREATE TABLE IF NOT EXISTS clients (
   id          VARCHAR(255) NOT NULL,
   name        VARCHAR(255) NOT NULL,
@@ -25,7 +24,6 @@ CREATE TABLE IF NOT EXISTS transactions (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Seed data
 INSERT IGNORE INTO clients (id, name, email, created_at) VALUES
   ('f4a498a7-5f0c-4ead-8f3b-d5a48264a2b1', 'Alice Smith', 'alice@example.com', NOW()),
   ('8b38afc4-1e47-4f9d-a2f5-ef12dc0c3c34', 'Bob Jones',   'bob@example.com',   NOW());
